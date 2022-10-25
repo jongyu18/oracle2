@@ -1121,9 +1121,14 @@ to before drop;
 -- 제약조건(무결성) : 잘못된 값이 데이터로 사용되는것을 못하게 하는것
 -- not null
 -- nuique
--- primary key
--- foreign key
+-- primary key (기본키)
+-- foreign key (참조키)   자식쪽에 fk키 설정한다.
+-- 1. 부모와 자식의 관계를 가지는 테이블에 자식쪽 테이블에 컬럼을 설정한다.
+-- 2. 부모쪽 테이블의 컬럼은 반드시 primary key또는 unique해야한다.
+-- 3.null데이터를 허용한다.
+
 -- check
+-- defalut
 
 -- emp, dept
 
@@ -1159,6 +1164,445 @@ delete from emp02;
 
 select *
 from emp02;
+
+
+-----------------------------------복습 데이터추가하기
+
+
+create table emp07(
+ empno number(4) constraint emp07_empno_pk primary key,
+ ename varchar2(9)constraint emp07_empno_nn not null,
+ job varchar2(9),
+ deptno number(2)constraint emp07_deptno_fk references dept07(deptno)
+ );
+ 
+ create table dept07(
+   deptno number(2)constraint dept07_deptno_pk primary key,
+   dname varchar2(20)constraint dept07_dname_nn not null,
+   loc varchar2(20)constraint dept07_loc_nn not null
+ );
+ 
+ 
+ 
+-- 서브쿼리문을 사용한 데이터 삽입
+insert into dept07
+select * from dept;
+
+ insert into emp07
+ select empno,ename,job,deptno from emp;
+ 
+ insert into emp07
+ values(1111,'aaa','MANAGER',50);
+ 
+ --ck
+ create table emp08(
+   empno number(4) primary key,
+   ename varchar2(10) not null,
+   sal number(7)constraint emp08_sal_ck check(sal between 500 and 5000),
+   gender varchar2(2) constraint emp08_gender_ck check(gender in('M','F'))
+ );
+ 
+select *   -- 데이터 확인
+from emp08;
+
+insert into emp08
+values (1111,'hong',1000,'M');
+
+insert into emp08
+values (2222,'hong',200,'M'); --ck 제약조건 위배 
+
+insert into emp08
+values (3333,'hong',1000,'A');
+
+--defalut(기본값 지정)
+create table dept08(
+  deptno number(2)primary key,
+  dname varchar2(10)not null,
+  loc varchar2(15)default'SEOUL'  --기본값 seoul 지정
+);
+
+select *   -- 데이터 확인
+from dept08;
+
+insert into dept08(deptno,dname,loc)
+values (20,'SALES','BUSAN');
+
+-- 제약조건 설정방식
+-- 컬럼 레벨의 설정 (not null은 컬럼 레벨에서만 가능)
+-- 테이블 레벨의 설정(not null 을 적용할 수 없다)
+
+create table emp09(
+  empno number(4),
+  ename varchar2(20)constraint emp09_ename_nn not null,
+  job varchar2(20),
+  deptno number(20),
+  
+  constraint emp09_empno_pk primary key(empno),
+  constraint emp09_job_uk unique(job),
+  constraint emp09_deptno_fk foreign key(deptno) references dept(deptno)
+);
+
+select *
+from emp09;
+
+insert into emp09
+values (3333,'hong','PRESIDENT',80);
+
+-- 복합키(기본키를 두개의 컬럼을 사용하는 경우)
+-- 테이블 레벨 방식으로만 적용 가능
+-- 1.테이블안에서 정의 하는 방식
+-- 2.Alter 명령어 사용방식
+
+
+create table member(
+ name varcahr2(10)
+ address varchar2(30),
+ hphone varchar2(10),
+ 
+ constraint member_name_adress_pk primary key(name,address)
+);
+
+create table emp10(
+  empno number(4),
+  ename varchar2(20),
+  job varchar2(20),
+  deptno number(20)
+
+);
+\
+--add
+alter table emp10
+add constraint emp10_empno_pk primary key(empno);
+
+alter table emp10
+add constraint emp10_empno_fk foreign key(deptno) references dept(deptno);
+
+
+
+--modufy
+--not null은 변경의 개념(null -> not unll)
+alter table emp10
+modify job constraint emp10_job_nn not null;
+
+alter table emp10
+modify ename constraint emp10_ename_nn not null;
+
+-- drop
+-- 제약조건명(constraint) 또는 제약조건(primary key)
+alter table emp10
+drop constraint emp10_emp_pk;
+
+
+create table emp11(
+  empno number(4),
+  ename varchar2(20),
+  job varchar2(20),
+  deptno number(20)
+
+);
+alter table emp11
+add constraint emp11_empno_pk primary key(empno);
+
+alter table emp11
+add constraint emp11_empno_fk foreign key(deptno) references dept11(deptno);
+
+
+create table dept11(
+  deptno number(2),
+  dname varchar2(10),
+  loc varchar2(15)
+  
+);
+
+alter table dept11
+add constraint dept11_deptno_pk primary key(deptno);
+
+insert into dept11
+select*from dept11;
+
+insert into emp11
+select empno,ename,job,deptno
+from emp;
+
+delete from dept11
+where deptno = 10;
+
+alter table dept11
+disable primary key cascade;
+
+alter table dept11
+drop primary key cascade;
+
+
+
+select *
+from dept11;
+
+select *
+from emp11;
+
+
+create table dept_const(
+  deptno number(2),
+  dname varchar(14),
+  loc varchar(13)
+
+);
+alter table dept_const
+add constraint deptconst_deptno_pk primary key(deptno);
+
+alter table dept_const
+add constraint deptconst_deptno_pk nuique(dname);
+
+
+
+
+select*
+from emp
+where sal between 2000 and 3000;
+
+
+select *
+from emp
+where ename like 'S%';
+
+select * 
+from emp
+where ename not like '%AM%';
+
+select ename,sal,sal*12+comm as annsal, comm
+from emp;
+
+select *
+from emp
+where MGR is not null;
+
+select*
+from emp
+where sal > null
+or comm is null;
+
+
+select*
+from emp
+where ename like '%S';
+
+
+
+
+SQL
+--crud 
+--create (insert) dml
+--read(select) dql
+--update dml
+--delete dml
+
+--뷰 테이블
+-- 객체 : table,indexe, view
+-- create or replace view 뷰테이블명(alias)
+-- as
+-- 서브쿼리(select)
+-- with check option
+-- with read only
+
+
+create table dept_copy 
+as
+select * from dept;
+
+create table emp_copy -- 복사되는 테이블은 제약조건이 안 넘어온다.
+as
+select* from emp;
+
+alter table emp_copy
+add constraint emp_copy_deptno_fk foreign key(deptno) references dept(deptno);
+
+select * 
+from emp_copy; --14
+
+select * 
+from dept_copy;  --4
+
+
+create or replace view emp_view30
+as
+select empno,ename,sal,depton
+from emp_copy
+where deptno = 30;
+
+
+select*
+from emp_view30;
+
+insert into emp_view30 (empno, ename , sal)
+values (1111,'hong', 1000, 30);
+
+
+insert into emp_view30 (empno, ename , sal)
+values (2222,'hong', 2000);
+
+create or replace view emp_view(사원번호,사원명,급여,부서번호)
+as
+select empno,enamem,sal,deptno
+from emp_copy;
+
+select *from emp_view;
+
+select*
+from emp_view
+where_부서번호 = 20;
+
+create or replace view emp_dept_view
+as
+select empnon, ename, sal, deptno, dname, loc
+from emp e inner join dept d
+on e.deptno = d.deptno
+orderby empno desc;
+
+select 'Oracle',
+lpad('oracle', 10, '#') as lpad_1,
+rpad('oracle', 10, '*') as rpad_1,
+lpad('oracle', 10) as lpad_2,
+rpad('oracle', 10) as rpad_2
+from dual;
+
+select
+rpad('907392-', 14, '*') as rpad_jmno,
+rpad('010-1234-', 13, '*')as rpad_phone
+from dual;
+
+-- 모든 객체의 이름은 중복될 수 없다.
+
+create or replace view view_chk30
+as
+select empno,ename,sal,comm,deptno
+from emp_copy
+where deptno = 30 with check option; -- 조건절의 컬럼을 수정하지 못하게 한다
+
+update view_chk30
+set deptno = 10;
+-- 뷰의 wiht check option 위 조건에 위배된다
+
+create or replace view view_read30
+as
+select empno,ename,sal,comm,deptno
+from emp_copy
+where deptno = 30 with read only;  -- 모든 컬럼에 대한 cud 가 불가능(조회만 가능)
+
+update view_read30
+set deptno = 10;
+-- 읽기 전용 뷰에서는 DML 작업을 수행할 수 없습니다.(insert,update,delete)
+
+-- 뷰의 활용
+-- TOP - N 조회하기
+-- 입사일이 가장 빠른 5명의 사원을 조회
+select * from emp;
+
+select * from emp
+order by hiredate asc;
+
+select * from emp
+where hiredate <= '81/05/01';
+
+DESC emp;
+
+select rownum, empno, ename, hiredate
+from emp
+where rownum <=5;
+
+
+
+select rownum, empno, ename, hiredate
+from emp
+where rownum <= 5;
+order by hiredate asc
+
+create or replace view view_hiredate
+as
+select empno,ename,hiredate
+from emp
+order by hiredate asc;
+
+select * from view_hiredate;
+
+select rownum, empno, ename, hiredate
+from view_hiredate
+where rownum <=7;
+
+select rownum, empno, ename, hiredate
+from view_hiredate
+where rownum between 2 and 5;   -- rownum을 조건절에 직접 사용시 반드시 1을 포함하는 조건식을 만들어야한다.
+
+
+create or replace view view_hiredate_rm
+as
+select rownum rm , empno,ename,hiredate
+from view_hiredate;
+
+select rm,empno,ename,hiredate
+from view_hiredate_rm
+where rm >=2 and rm <=5;
+
+-- 인라인뷰
+
+select rm,empno, ename,hiredate
+from (select rownum rm , empno,ename,hiredate
+      from (select empno,ename,hiredate
+            from emp
+            order by hiredate asc
+            )a
+      )b
+where rm >=2 and rm <= 5;      
+
+
+-- 입사일이 가장 빠른 5명
+select empno, ename , hiredate
+from (select rownum rm , empno,ename,hiredate
+      from (select empno,ename,hiredate
+            from emp
+            order by hiredate asc
+            )a
+      )b
+where  rm <= 5;      
+
+
+-- 시퀀스
+-- 자동으로 번호를 증가시키는 기능수행
+-- create, drop
+-- nextval, currval
+
+
+create sequence 시퀀스명
+start with 시작값 -> 1
+increment by 증가치 ->1
+maxvalue 최대값 ->10의 1027
+minvalue 최소값 ->10의 -1027
+
+
+create sequence dept_deptno_seq
+increment by 10
+start with 10;
+
+select dept_deptno_seq.nextval
+from dual;
+
+create sequence emp_seq
+start with 1
+increment by 1
+maxvalue 1000;
+
+drop table emp01;
+
+create table emp01
+as
+select empno, ename, hiredate from emp
+where 1!=1;
+
+select * from emp01;
+
+insert into emp01
+values (emp_seq.nextval,'hong',sysdate);
+
 
 
 
