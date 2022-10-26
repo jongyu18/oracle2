@@ -1603,6 +1603,450 @@ select * from emp01;
 insert into emp01
 values (emp_seq.nextval,'hong',sysdate);
 
+create table product1(
+    pid varchar2(10) ,
+    pname varchar2(10),
+    price number(5),
+    
+    constraint product_pid_pk primary key(pid)
+);
+
+create sequence idx_prouduct_id
+start with 1000;
+
+insert into product1
+values('pid' || idx_prouduct_id.nextval,'chese',2000);
+
+
+select * from product1;
+
+drop sequence idx_prouduct_id;
+
+-- 사용자관리
+-- create,drop
+-- create user 계정명 identified by 패스워드
+
+select empno, ename, sal, comm, sal+comm,
+nvl(comm,0),
+sal+nvl(comm,0)
+from emp;
+
+select empno, ename, comm,
+     nvl2(comm, '0' , 'x'),
+     nvl2(comm, sal*12+comm, sal*12) as annsal
+     from emp;
+     
+     
+select empno, ename, job, sal,
+case job
+    when 'MANAGER' then sal*1.1
+    when 'SALESMAN' then sal*1.05
+    when 'ANALYST' then sal
+    else sal*1.03
+    end as upsal
+    from emp;
+    
+select empno, ename, job, sal,
+case job
+  when 'MANAGER' then sal*1.1
+  when 'SALESMAN' then sal*1.3
+  when 'ANALYST' then sal
+  else sal*1
+  end as upsal
+  from emp;
+  
+select empno, ename, comm,
+  case
+  when comm is null then '해당사항 없음'
+  when comm = 0 then '수당없음'
+  when conn > 0 then '수당 : '  comm
+  end as comm_text
+  from emp;
+
+
+select avg(sal), deptno
+from emp
+group by deptno;
+
+select deptno, job, avg(sal)
+from emp
+group by deptno, job
+order by deptno, job;
+
+select deptno, job, avg(sal)
+from emp
+group by deptno, job
+having avg(sal) >= 2000
+order by deptno, job;
+
+select deptno, job, avg(sal)
+from emp
+group by deptno, job
+having avg(sal) >= 2000
+order by deptno, job;
+
+select deptno, job, avg(sal)
+from emp
+
+where sal <= 3000
+group by deptno, job
+having avg(sal) >=2000
+order by deptno, job;
+
+
+-- PL/SQL(확장되어진 SQL언어)
+-- 변수, 조건문, 반복문
+
+--declare
+   --변수정의
+
+--begin
+  --SQL구문 작성
+  --출력구문 작성 = 쿼리문의 수행결과를 반드시 출력함수를 통해서 확인해야한다.
+
+--exception
+  --예외처리 구문
+
+--end;
+--/
+
+set serveroutput on;
+
+begin
+   dbms_output.put_line('Hello World');  -- 출력함수
+end;
+/ --/; 아래에 붙여야함
+
+
+declare
+  --vempno number(4);  --변수의 선언
+ -- vename varchar2(10);
+   vempno constant.number(4) := 7777;  --상수
+   vename varchar2(10) not null := 'SCOTT';  --null 값을 변수의 값으로 사용할 수 없다.
+begin
+ -- vempno := 7777;   -- 변수의 초기화
+ --vename := 'SCOTT';
+  
+  dbms_output.put_line(' 사원 / 이름' );
+  dbms_output.put_line(vempno || ' ' || vename);
+end;
+/
+
+declare 
+--스칼라 방식
+ --  vempno number(4);
+
+--래퍼런스 방식
+   vempno emp.empno%type := 7777; --기존 테이블의 컬럼의 타입을 참조한다
+begin
+ -- vempno := 7777;
+  dbms_output.put_line(vempno);
+end;
+/
+
+declare
+   --레퍼런스 방식
+    vempno emp.empno%type;
+    vename emp.empno%type;
+begin
+    select empno,ename 
+    into vempno,vename -- (필수)
+    from emp
+    where empno = 7788; --(필수)
+    
+    dbms_output.put_line('사번 / 이름');
+    dbms_output.put_line(vempno || ' '|| vename);
+exception
+ when TOO_MANY_ROWS then dbms_output.put_line('행의일수가 여러개 입니다.');
+ when OTHERS then dbms_output.put_line('모든 예외에 대한 처리');
+end;
+/
+
+declare
+ --테이블 type(사용자 정의 변수의 타입을 정의)
+ --배열의 형식
+ --vename varchar(10)
+ TYPE ename_table_type IS TABLE OF emp.ename%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE empno_table_type IS TABLE OF emp.empno%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE magr_table_type IS TABLE OF emp.mgr%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE hiredate_table_type IS TABLE OF emp.hiredate%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE sal_table_type IS TABLE OF emp.sal%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE comm_table_type IS TABLE OF emp.comm%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE deptno_table_type IS TABLE OF emp.deptno%type
+ INDEX BY BINARY_INTEGER;
+ 
+ TYPE job_table_type IS TABLE OF emp.job%type
+ INDEX BY BINARY_INTEGER;
+ 
+ enameArr ename_table_type; -- 배열형식의 변수 선언
+ jobArr job_table_type;     -- 배열형식의 변수 선언
+ empnoArr empno_table_type;     -- 배열형식의 변수 선언
+ mgrArr mgr_table_type;     -- 배열형식의 변수 선언
+ hiredateArr hiredate_table_type;     -- 배열형식의 변수 선언
+ salArr sal_table_type;     -- 배열형식의 변수 선언
+ commArr comm_table_type;     -- 배열형식의 변수 선언
+ deptnoArr deptno_table_type;     -- 배열형식의 변수 선언
+ i BINARY_INTEGER :=0;
+begin
+  for k in(select ename,job from emp) loop
+   i := i +1;
+   enameArr(i) := k.ename;
+   jobArr(i) := k.job; 
+  end loop;
+  
+  for j in 1..i loop
+      dbms_output.put_line(enameArr(j) || ' / ' || jobArr(j));
+  end loop;
+end;
+/
+
+declare
+   -- 레코드 type(여러개의 변수를 묶어서 사용한다) -> 사용자 정의 변수 타입
+  -- 클래스랑 유사하다
+  
+  TYPE emp_record_type IS RECORD(
+       v_empno emp.empno%type,
+       v_ename emp.ename%type,
+       v_job emp.job%type,
+       v_deptno emp.deptno%type
+  
+  );
+  
+  emp_record emp_record_type;  -- 레코드 타입의 변수 선언;  
+
+  
+begin
+  select empno,ename,job,deptno
+  into emp_record
+  from emp
+  where empno = 7788;
+  
+  dbms_output.put_line( emp_record.v_empno || ' '|| emp_record.ename|| ' '|| emp_record.job|| '' || emp_record.deptno);
+
+
+end;
+/
+
+create table dept_record
+as
+select*from dept
+
+declare
+   TYPE rec_dept IS RECORD(
+     v_deptno dept_record.deptno%type not null := 99,
+     v_dname dept_record.dname%type,
+     v_loc dept_record.loc%type
+   );
+   dept_rec rec_dept;
+begin
+  dept_rec.v_deptno := 50;
+  dept_rec.v_dname = 'INSA';
+  dept_rec.v_loc := 'SEOUL';
+  
+  update dept_record
+  set dname = dept_rec.v_dname, loc = dept_rec.v_loc
+  where deptno = dept_rec.v_deptno;
+  
+
+end;
+/
+
+
+
+-- 조건문
+
+declare
+   vempno number(4);
+   vename varchar2(10);
+   vdeptno varchar2(10);
+   vdname carchar2(10) = null
+begin
+ select empno, ename, deptno
+ into vempno, vename, vdeptno
+ from emp
+ where enpno = 7788;
+ 
+ if (vdeptno = 10 ) then   -
+      vdname := 'AAA';
+ end if;
+ 
+ if (vdeptno = 20 ) then   --
+      vdname := 'BBB';
+  end if;
+  
+  if (vdeptno = 30 ) then   -
+      vdname := 'CCC';
+   end if;
+   
+  if (vdeptno = 40 ) then   --
+      vdname := 'DDD';
+     end if;
+     
+     dbms_output.put_line(vdname);
+end;
+/
+
+
+declare 
+-- %ROWTYPE : 테이블의 모든 컬럼의 이름과 변수를 참조하겠다.
+-- 컬럼명이 변수명으로 사용되고 컬럼의 타입을 변수의 타입으로 사용한다.
+ vemp emp%rewtype;
+ 
+begin
+  select *
+  into vemp
+  from emp
+  where empno = 7788;
+  dbms_output.put_line(vemp.job);
+  dbms_output.put_line(vemp.empno);
+  dbms_output.put_line(vemp.ename);
+  dbms_output.put_line(vemp.deptno);
+  dbms_output.put_line(vemp.mgr);
+  dbms_output.put_line(vemp.comm);
+  dbms_output.put_line(vemp.deptno);
+  dbms_output.put_line(vemp.horedate);
+  
+end;
+/
+
+declare
+  vemp emp%rowtype;
+  annsal number(7,2);
+  
+begin
+  dbms_output.put_line('사번 / 이름 / 연봉');
+  dbms_output.put_line('----------------');
+  
+  select *
+  into vemp
+  from emp
+  where empno = 7788;
+  dbms_output.put_line(vemp.sal);
+  dbms_output.put_line(vemp.comm);
+ 
+ -- 해당 사원의 연봉을 출력하세요. 단 커미션이 null인경우 0으로 출력 
+end;
+/
+
+
+declare
+
+vemp emp%rowtype;
+vdname varchar2(10);
+
+
+begin
+ select*
+ into vemp
+ from emp
+ where empno = 7788;
+
+ if( vemp.deptno = 10) then
+    vdname := 'AAA';
+ elsif ( vemp.deptno = 20 ) then
+    vdname: = 'BBB';
+ elsif ( vemp.deptno = 30 ) then
+    vdname := 'CCC';
+ elsif ( vemp.deptno = 40 ) then
+    vdname := 'DDD'; 
+ elsif ( vemp.deptno = 50 ) then
+    vdname := 'EEE';
+ end if;
+ 
+ dbms_output.put_line(vdname);
+
+
+end;
+/
+
+
+
+declare
+ v_deptno number(2) not null default 10;
+ 
+ begin
+  dbms_output.put_line('v_deptno : ' || v_deptno);
+
+end;
+/
+
+
+-- 조건문
+-- if then end if;
+-- if then else end if;
+-- if then eslfi then end if;
+
+
+/*
+-- 반복문
+ loop
+   실행문(무한 반복문)
+   무한 반복문의 제어
+   1, exit when 조건문
+   2, if then end if;
+end loop;
+end;
+/
+
+
+declare
+   n number := 1;
+begin
+  loop
+     dbms_output.put_line(n);
+     n := n + 1;
+     exit when n > 10;  -- 반복문 멈추기 위한 조건
+  end loop;
+end;
+/
+
+
+
+
+   
+begin
+   for n in 1..10 loop -- in 시작값..끝값 1씩증가 1~10 반복
+       dbms_output.put_line(n);
+      end loop;
+
+end;
+/
+
+declare
+  v_number number :=13;
+begin
+ if mod(v_number,2) = 1 then
+    dbms_output.put_line('v_number는 홀수입니다!');
+    end if;
+    end;
+    /
+
+declare
+  n number := 1;
+begin
+ while(n <= 10) loop 
+     dbms_output.put_line(n);
+     n := n + 1;
+ end loop;
+ 
+end;
+/
+
+
+
+
 
 
 
